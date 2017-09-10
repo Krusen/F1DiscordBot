@@ -29,7 +29,7 @@ namespace F1DiscordBot
             var qualiResults = (await GetQualifyingResultsAsync(driver)).Races.SelectMany(x => x.QualifyingResults).ToList();
             var poles = qualiResults.Count(x => x.Position == 1);
             var bestQuali = qualiResults.OrderBy(x => x.Position).FirstOrDefault()?.Position;
-            var avgQuali = qualiResults.Average(x => x.Position);
+            var avgQuali = qualiResults.Any() ? qualiResults.Average(x => x.Position) : (double?)null;
 
             var grouped = qualiResults.GroupBy(x => x.Position).OrderByDescending(x => x.Count()).FirstOrDefault();
             var mostFrequentQuali = grouped?.Key;
@@ -57,7 +57,7 @@ namespace F1DiscordBot
 
         // TODO: Use object instead of all these parameters
         private static DiscordEmbed GetEmbed(Driver driver, int totalRaces, int wins, int podiums,
-            int? bestFinish, double avgFinishPosition, double totalPoints, int poles, int? bestQuali, double avgQuali,
+            int? bestFinish, double avgFinishPosition, double totalPoints, int poles, int? bestQuali, double? avgQuali,
             int? mostFrequestFinish, int? mostFrequestFinishCount,
             int? mostFrequentQuali, int? mostFrequentQualiCount)
         {
@@ -78,8 +78,10 @@ namespace F1DiscordBot
             if (mostFrequestFinish != null)
                 embed.AddField("Most Frequent Finish", $"{mostFrequestFinish} ({mostFrequestFinishCount} {(mostFrequestFinishCount == 1 ? "time" : "times")})");
 
-            embed.AddField("Best Qualifying", bestQuali?.ToString() ?? "-");
-            embed.AddField("Average Qualifying", avgQuali.ToString("N0", CultureInfo.InvariantCulture));
+            if (bestQuali != null)
+                embed.AddField("Best Qualifying", bestQuali?.ToString());
+            if (avgQuali != null)
+                embed.AddField("Average Qualifying", avgQuali?.ToString("N0", CultureInfo.InvariantCulture));
             if (mostFrequentQuali != null)
                 embed.AddField("Most Frequent Qualifying", $"{mostFrequentQuali} ({mostFrequentQualiCount} {(mostFrequentQualiCount == 1 ? "time" : "times")})");
 

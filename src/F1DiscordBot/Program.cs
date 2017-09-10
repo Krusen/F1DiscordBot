@@ -6,6 +6,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Exceptions;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
+using DSharpPlus.Interactivity;
 using ErgastApi.Client;
 
 namespace F1DiscordBot
@@ -70,6 +71,8 @@ namespace F1DiscordBot
             Commands.RegisterCommands<RaceCommands>();
             Commands.RegisterCommands<RaceResultsCommands>();
             Commands.RegisterCommands<StandingsCommands>();
+
+            Client.UseInteractivity();
 
             ErgastClient = new ErgastClient();
 

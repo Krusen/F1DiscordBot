@@ -6,16 +6,39 @@ using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity;
 using ErgastApi.Requests;
 using ErgastApi.Responses.Models.Standings;
 
 namespace F1DiscordBot
 {
-    [Group("standings")]
+    [Group("standings", CanInvokeWithoutSubcommand = true)]
     [Description("Show driver or constructor standings for a season, optionally at a specific round in the season.\n" +
                  "Season and round parameters are optional. If not specified the current standings are shown.")]
     public class StandingsCommands
     {
+        public async Task ExecuteGroupAsync(CommandContext ctx)
+        {
+            var interactivity = ctx.Client.GetInteractivityModule();
+            await ctx.RespondAsync("Missing parameter. Please specify either **wdc** or **wcc**.");
+
+            var msg = await interactivity.WaitForMessageAsync(
+                x => x.Author.Id == ctx.Message.Author.Id && (x.Content.Equals("wdc") || x.Content.Equals("wcc")),
+                TimeSpan.FromSeconds(30));
+
+            if (msg != null)
+            {
+                if (msg.Message.Content == "wdc")
+                {
+                    await DriverStandings(ctx);
+                }
+                else if (msg.Message.Content == "wdc")
+                {
+                    await ConstructorStandings(ctx);
+                }
+            }
+        }
+
         [Command("wdc"), Aliases("drivers")]
         [Description("Show driver standings (WDC).")]
         public async Task DriverStandings(CommandContext ctx, string season = Seasons.Current, string round = null)

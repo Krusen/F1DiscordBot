@@ -43,12 +43,10 @@ namespace F1DiscordBot
             // up next, let's set up our commands
             var ccfg = new CommandsNextConfiguration
             {
-                // let's use the string prefix defined in config.json
-                //StringPrefix = cfgjson.CommandPrefix,
-                CustomPrefixPredicate = msg => Task.FromResult(msg.Content.StartsWith("show me", StringComparison.OrdinalIgnoreCase) ? 7 : -1),
 #if DEBUG
                 StringPrefix = "++",
 #else
+                CustomPrefixPredicate = msg => Task.FromResult(msg.Content.StartsWith("show me", StringComparison.OrdinalIgnoreCase) ? 7 : -1),
                 StringPrefix = "+",
 #endif
 

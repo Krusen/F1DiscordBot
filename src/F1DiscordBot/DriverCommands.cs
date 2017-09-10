@@ -159,8 +159,8 @@ namespace F1DiscordBot
 
             if (driver == null && id.Length == 3)
             {
-                driver = drivers.FirstOrDefault(x => string.Equals(x.DriverId, id, ignoreCase)) ??
-                         drivers.FirstOrDefault(x => string.Equals(x.Code, id, ignoreCase)) ??
+                driver = drivers.FirstOrDefault(x => string.Equals(x.Code, id, ignoreCase)) ??
+                         drivers.FirstOrDefault(x => string.Equals(x.DriverId, id, ignoreCase)) ??
                          drivers.FirstOrDefault(x => string.Equals(x.LastName, id, ignoreCase)) ??
                          drivers.FirstOrDefault(x => string.Equals(x.FirstName, id, ignoreCase));
             }

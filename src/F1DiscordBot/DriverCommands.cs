@@ -77,9 +77,9 @@ namespace F1DiscordBot
 
             embed.AddField("Races", totalRaces.ToString());
             embed.AddField("Total Points", totalPoints.ToString(CultureInfo.InvariantCulture));
-            embed.AddField("Wins :first_place:", wins, true);
-            embed.AddField("Podiums :third_place:", podiums, true);
-            embed.AddField("Poles :trophy:", poles.ToString(), true);
+            embed.AddField("Wins :first_place:", $"{wins} ({Percentage(wins, totalRaces)}%)", true);
+            embed.AddField("Podiums :third_place:", $"{podiums} ({Percentage(podiums, totalRaces)}%)", true);
+            embed.AddField("Poles :trophy:", $"{poles} ({Percentage(poles, totalRaces)}%)", true);
 
             embed.AddField("Best Finish", bestFinish?.WithSuffix() ?? "-");
             embed.AddField("Avg. Finish", avgFinishPosition.WithSuffix(), true);

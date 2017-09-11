@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
 using ErgastApi.Responses.Models;
@@ -27,5 +28,23 @@ namespace F1DiscordBot
         {
             return $"{driver.FirstName[0]}. {driver.LastName}";
         }
+
+        public static DiscordEmbedBuilder AddField(this DiscordEmbedBuilder builder, string name, object value, bool inline = false)
+        {
+            return builder.AddField(name, value.ToString(), inline);
+        }
+
+        public static string WithSuffix(this int num)
+        {
+            if (num.ToString().EndsWith("11")) return num + "th";
+            if (num.ToString().EndsWith("12")) return num + "th";
+            if (num.ToString().EndsWith("13")) return num + "th";
+            if (num.ToString().EndsWith("1")) return num + "st";
+            if (num.ToString().EndsWith("2")) return num + "nd";
+            if (num.ToString().EndsWith("3")) return num + "rd";
+            return num + "th";
+        }
+
+        public static string WithSuffix(this double num) => WithSuffix((int) Math.Round(num, MidpointRounding.AwayFromZero));
     }
 }

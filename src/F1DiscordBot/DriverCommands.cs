@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,12 +32,13 @@ namespace F1DiscordBot
             var bestQuali = qualiResults.OrderBy(x => x.Position).FirstOrDefault()?.Position;
             var avgQuali = qualiResults.Any() ? qualiResults.Average(x => x.Position) : (double?)null;
 
-            var grouped = qualiResults.GroupBy(x => x.Position).OrderByDescending(x => x.Count()).FirstOrDefault();
+            var grouped = qualiResults.GroupBy(x => x.Position).OrderByDescending(x => x.Count()).ThenBy(x => x.Key).FirstOrDefault();
             var mostFrequentQuali = grouped?.Key;
             var mostFrequentQualiCount = grouped?.Count();
 
 
             var raceResults = (await GetRaceResultsAsync(driver)).Races.SelectMany(x => x.Results).ToList();
+            var constructors = raceResults.Select(x => x.Constructor.Name).Distinct().ToList();
             var totalRaces = raceResults.Count;
             var wins = raceResults.Count(x => x.Position == 1);
             var podiums = raceResults.Count(x => x.Position <= 3);
@@ -44,11 +46,11 @@ namespace F1DiscordBot
             var avgFinishPosition = raceResults.Average(x => x.Position);
             var totalPoints = raceResults.Sum(x => x.Points);
 
-            var groupedRaces = raceResults.GroupBy(x => x.Position).OrderByDescending(x => x.Count()).FirstOrDefault();
+            var groupedRaces = raceResults.GroupBy(x => x.Position).OrderByDescending(x => x.Count()).ThenBy(x => x.Key).FirstOrDefault();
             var mostFrequentFinish = groupedRaces?.Key;
             var mostFrequentFinishCount = groupedRaces?.Count();
 
-            var embed = GetEmbed(driver, totalRaces, wins, podiums, bestFinish, avgFinishPosition, totalPoints, poles,
+            var embed = GetEmbed(driver, constructors, totalRaces, wins, podiums, bestFinish, avgFinishPosition, totalPoints, poles,
                 bestQuali, avgQuali, mostFrequentFinish, mostFrequentFinishCount, mostFrequentQuali,
                 mostFrequentQualiCount);
 
@@ -56,39 +58,57 @@ namespace F1DiscordBot
         }
 
         // TODO: Use object instead of all these parameters
-        private static DiscordEmbed GetEmbed(Driver driver, int totalRaces, int wins, int podiums,
+        private static DiscordEmbed GetEmbed(Driver driver, IList<string> constructors, int totalRaces, int wins, int podiums,
             int? bestFinish, double avgFinishPosition, double totalPoints, int poles, int? bestQuali, double? avgQuali,
             int? mostFrequestFinish, int? mostFrequestFinishCount,
             int? mostFrequentQuali, int? mostFrequentQualiCount)
         {
             var embed = new DiscordEmbedBuilder {Color = DiscordColor.Gold};
 
+
             embed.AddField("Driver", GetDriverFieldValue(driver));
             if (driver.DateOfBirth != null)
-                embed.AddField("Date of Birth", $"{driver.DateOfBirth:yyyy-MM-dd} (Age {GetAge(driver.DateOfBirth.Value)})");
+            {
+                var age = GetAge(driver.DateOfBirth.Value);
+                embed.AddField("Date of Birth", $"{driver.DateOfBirth:yyyy-MM-dd} (Age {age}){(age < 20 ? " :baby:" : age > 35 ? " :older_man:" : "")}");
+            }
+
+            embed.AddField("Teams", string.Join("\n", constructors));
 
             embed.AddField("Races", totalRaces.ToString());
             embed.AddField("Total Points", totalPoints.ToString(CultureInfo.InvariantCulture));
-            embed.AddField("Wins", wins.ToString(), true);
-            embed.AddField("Podiums", podiums.ToString(), true);
-            embed.AddField("Poles", poles.ToString(), true);
+            embed.AddField("Wins :first_place:", wins, true);
+            embed.AddField("Podiums :third_place:", podiums, true);
+            embed.AddField("Poles :trophy:", poles.ToString(), true);
 
-            embed.AddField("Best Finish", bestFinish?.ToString() ?? "-");
-            embed.AddField("Average Finish", avgFinishPosition.ToString("N0", CultureInfo.InvariantCulture));
+            embed.AddField("Best Finish", bestFinish?.WithSuffix() ?? "-");
+            embed.AddField("Avg. Finish", avgFinishPosition.WithSuffix(), true);
             if (mostFrequestFinish != null)
-                embed.AddField("Most Frequent Finish", $"{mostFrequestFinish} ({mostFrequestFinishCount} {(mostFrequestFinishCount == 1 ? "time" : "times")})");
+            {
+                embed.AddField(
+                    "Most Frequent Finish",
+                    $"{mostFrequestFinish?.WithSuffix()} ({mostFrequestFinishCount} {(mostFrequestFinishCount == 1 ? "time" : "times")} - {Percentage(mostFrequestFinishCount.Value, totalRaces)}%)",
+                    true);
+            }
 
             if (bestQuali != null)
-                embed.AddField("Best Qualifying", bestQuali?.ToString());
+                embed.AddField("Best Qualifying", bestQuali?.WithSuffix());
             if (avgQuali != null)
-                embed.AddField("Average Qualifying", avgQuali?.ToString("N0", CultureInfo.InvariantCulture));
+                embed.AddField("Avg. Qualifying", avgQuali?.WithSuffix(), true);
             if (mostFrequentQuali != null)
-                embed.AddField("Most Frequent Qualifying", $"{mostFrequentQuali} ({mostFrequentQualiCount} {(mostFrequentQualiCount == 1 ? "time" : "times")})");
+            {
+                embed.AddField(
+                    "Most Frequent Qualifying",
+                    $"{mostFrequentQuali?.WithSuffix()} ({mostFrequentQualiCount} {(mostFrequentQualiCount == 1 ? "time" : "times")} - {Percentage(mostFrequentQualiCount.Value, totalRaces)}%)",
+                    true);
+            }
 
             embed.AddField("Wikipedia", driver.WikiUrl);
 
             return embed.Build();
         }
+
+        private static int Percentage(double count, double total) => (int) Math.Round(count * 100 / total, MidpointRounding.AwayFromZero);
 
         private static string GetDriverFieldValue(Driver driver)
         {

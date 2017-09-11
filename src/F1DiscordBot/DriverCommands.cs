@@ -172,7 +172,6 @@ namespace F1DiscordBot
             {
                 driver = drivers.FirstOrDefault(x => x.PermanentNumber.ToString() == id) ??
                          drivers.FirstOrDefault(x => string.Equals(x.DriverId, id, ignoreCase)) ??
-                         drivers.FirstOrDefault(x => string.Equals(x.Code, id, ignoreCase)) ??
                          drivers.FirstOrDefault(x => string.Equals(x.LastName, id, ignoreCase)) ??
                          drivers.FirstOrDefault(x => string.Equals(x.FirstName, id, ignoreCase));
             }
@@ -187,11 +186,10 @@ namespace F1DiscordBot
 
             if (driver == null)
             {
-                driver = drivers.FirstOrDefault(x => string.Equals(x.DriverId, id, ignoreCase)) ??
-                         drivers.FirstOrDefault(x => string.Equals(x.Code, id, ignoreCase)) ??
-                         drivers.FirstOrDefault(x => string.Equals(x.LastName, id, ignoreCase)) ??
-                         drivers.FirstOrDefault(x => string.Equals(x.FullName, id, ignoreCase)) ??
+                driver = drivers.FirstOrDefault(x => string.Equals(x.LastName, id, ignoreCase)) ??
                          drivers.FirstOrDefault(x => string.Equals(x.FirstName, id, ignoreCase)) ??
+                         drivers.FirstOrDefault(x => string.Equals(x.DriverId, id, ignoreCase)) ??
+                         drivers.FirstOrDefault(x => string.Equals(x.FullName, id, ignoreCase)) ??
                          drivers.FirstOrDefault(x => x.PermanentNumber.ToString() == id);
             }
 

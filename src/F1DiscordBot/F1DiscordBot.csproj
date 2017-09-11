@@ -6,11 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DSharpPlus" Version="3.0.0" />
-    <PackageReference Include="DSharpPlus.CommandsNext" Version="3.0.0" />
-    <PackageReference Include="DSharpPlus.Interactivity" Version="3.0.0" />
-    <PackageReference Include="ErgastApiClient" Version="1.2.0" />
-    <PackageReference Include="System.ValueTuple" Version="4.3.0" />
+    <PackageReference Include="DSharpPlus" Version="3.1.1" />
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="3.1.1" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="3.1.1" />
+    <PackageReference Include="ErgastApiClient" Version="1.2.2" />
+    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
   </ItemGroup>
 
   <ItemGroup>

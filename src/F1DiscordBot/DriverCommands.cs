@@ -9,6 +9,7 @@ using DSharpPlus.Entities;
 using ErgastApi.Requests;
 using ErgastApi.Responses;
 using ErgastApi.Responses.Models;
+using ErgastApi.Responses.Models.Standings;
 
 namespace F1DiscordBot
 {
@@ -50,7 +51,9 @@ namespace F1DiscordBot
             var mostFrequentFinish = groupedRaces?.Key;
             var mostFrequentFinishCount = groupedRaces?.Count();
 
-            var embed = GetEmbed(driver, constructors, totalRaces, wins, podiums, bestFinish, avgFinishPosition, totalPoints, poles,
+            var championships = (await GetDriverChampionshipsAsync(driver)).StandingsLists;
+
+            var embed = GetEmbed(driver, constructors, championships, totalRaces, wins, podiums, bestFinish, avgFinishPosition, totalPoints, poles,
                 bestQuali, avgQuali, mostFrequentFinish, mostFrequentFinishCount, mostFrequentQuali,
                 mostFrequentQualiCount);
 
@@ -58,7 +61,7 @@ namespace F1DiscordBot
         }
 
         // TODO: Use object instead of all these parameters
-        private static DiscordEmbed GetEmbed(Driver driver, IList<string> constructors, int totalRaces, int wins, int podiums,
+        private static DiscordEmbed GetEmbed(Driver driver, IList<string> constructors, IList<DriverStandingsList> championships, int totalRaces, int wins, int podiums,
             int? bestFinish, double avgFinishPosition, double totalPoints, int poles, int? bestQuali, double? avgQuali,
             int? mostFrequestFinish, int? mostFrequestFinishCount,
             int? mostFrequentQuali, int? mostFrequentQualiCount)
@@ -77,6 +80,10 @@ namespace F1DiscordBot
 
             embed.AddField("Races", totalRaces.ToString());
             embed.AddField("Total Points", totalPoints.ToString(CultureInfo.InvariantCulture));
+
+            if (championships.Any())
+                embed.AddField($"Championships ({championships.Count})", $"{string.Join(", ", championships.Select(x => x.Season))}");
+
             embed.AddField("Wins :first_place:", $"{wins} ({Percentage(wins, totalRaces)}%)", true);
             embed.AddField("Podiums :third_place:", $"{podiums} ({Percentage(podiums, totalRaces)}%)", true);
             embed.AddField("Poles :trophy:", $"{poles} ({Percentage(poles, totalRaces)}%)", true);
@@ -147,6 +154,12 @@ namespace F1DiscordBot
         private static Task<RaceResultsResponse> GetRaceResultsAsync(Driver driver)
         {
             var request = new RaceResultsRequest {DriverId = driver.DriverId, Limit = 1000};
+            return Program.ErgastClient.GetResponseAsync(request);
+        }
+
+        private static Task<DriverStandingsResponse> GetDriverChampionshipsAsync(Driver driver)
+        {
+            var request = new DriverStandingsRequest {DriverId = driver.DriverId, DriverStanding = 1};
             return Program.ErgastClient.GetResponseAsync(request);
         }
 

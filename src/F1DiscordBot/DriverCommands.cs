@@ -15,7 +15,7 @@ namespace F1DiscordBot
     public class DriverCommands
     {
         [Command("driver"), Aliases("drivers")]
-        public async Task DriverInfo(CommandContext ctx, [RemainingText] string id)
+        public async Task DriverInfo(CommandContext ctx, [RemainingText, Description("Driver 3-letter code, driver number or name")] string id)
         {
             await ctx.TriggerTypingAsync();
 
@@ -190,7 +190,9 @@ namespace F1DiscordBot
                          drivers.FirstOrDefault(x => string.Equals(x.FirstName, id, ignoreCase)) ??
                          drivers.FirstOrDefault(x => string.Equals(x.DriverId, id, ignoreCase)) ??
                          drivers.FirstOrDefault(x => string.Equals(x.FullName, id, ignoreCase)) ??
-                         drivers.FirstOrDefault(x => x.PermanentNumber.ToString() == id);
+                         drivers.FirstOrDefault(x => x.PermanentNumber.ToString() == id) ??
+                         drivers.FirstOrDefault(x => x.LastName.StartsWith(id, ignoreCase)) ??
+                         drivers.FirstOrDefault(x => x.FirstName.StartsWith(id, ignoreCase));
             }
 
             return driver;

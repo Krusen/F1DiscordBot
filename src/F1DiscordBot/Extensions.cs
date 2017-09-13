@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
@@ -46,5 +48,14 @@ namespace F1DiscordBot
         }
 
         public static string WithSuffix(this double num) => WithSuffix((int) Math.Round(num, MidpointRounding.AwayFromZero));
+
+        public static T GetRandom<T>(this IList<T> list)
+        {
+            if (!list.Any())
+                return default;
+
+            var rnd = new Random();
+            return list[rnd.Next(0, list.Count)];
+        }
     }
 }

@@ -70,6 +70,7 @@ namespace F1DiscordBot
             Commands.RegisterCommands<RaceResultsCommands>();
             Commands.RegisterCommands<StandingsCommands>();
             Commands.RegisterCommands<DriverCommands>();
+            Commands.RegisterCommands<AskCommands>();
 
             Client.UseInteractivity();
 

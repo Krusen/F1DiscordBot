@@ -10,21 +10,16 @@ namespace F1DiscordBot
 {
     public static class Extensions
     {
-        public static async Task RespondWithSpoilerAsync(this CommandContext ctx, string spoilerFreeMsg)
-        {
-            await ctx.RespondWithSpoilerAsync(null, spoilerFreeMsg);
-        }
-
-        public static async Task RespondWithSpoilerAsync(this CommandContext ctx, DiscordEmbed embed, string spoilerFreeMsg = null)
+        public static async Task RespondWithSpoilerAsync(this CommandContext ctx, string message = null, DiscordEmbed embed = null, string spoilerFreeMsg = null)
         {
             if (ctx.Message.Channel?.Name == "spoilers" || ctx.Channel.IsPrivate)
             {
-                await ctx.RespondAsync(embed: embed);
+                await ctx.RespondAsync(message, embed: embed);
             }
             else
             {
                 var dmChannel = await ctx.Member.CreateDmChannelAsync();
-                await dmChannel.SendMessageAsync(embed: embed);
+                await dmChannel.SendMessageAsync(message, embed: embed);
 
                 spoilerFreeMsg = spoilerFreeMsg ?? "Answered in DM to avoid spoilers";
                 await ctx.RespondAsync(spoilerFreeMsg);

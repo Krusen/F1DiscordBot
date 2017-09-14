@@ -41,7 +41,7 @@ namespace F1DiscordBot
 
             var embed = GetRaceResultsEmbed(raceResult, racePitstops);
 
-            await ctx.RespondWithSpoilerAsync(embed, "Results sent in DM to avoid spoilers");
+            await ctx.RespondWithSpoilerAsync(embed: embed, spoilerFreeMsg: "Results sent in DM to avoid spoilers");
         }
 
         private static (string season, string round) GetSeasonAndRound(string[] args)

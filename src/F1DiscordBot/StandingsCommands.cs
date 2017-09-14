@@ -53,7 +53,7 @@ namespace F1DiscordBot
             if (driverStandings != null)
             {
                 var driversEmbed = GetDriverStandingsEmbed(driverStandings);
-                await ctx.RespondWithSpoilerAsync(driversEmbed);
+                await ctx.RespondWithSpoilerAsync(embed: driversEmbed);
             }
             else
             {
@@ -75,7 +75,7 @@ namespace F1DiscordBot
             if (constructorStandings != null)
             {
                 var constructorsEmbed = GetConstructorsEmbed(constructorStandings);
-                await ctx.RespondWithSpoilerAsync(constructorsEmbed);
+                await ctx.RespondWithSpoilerAsync(embed: constructorsEmbed);
             }
             else
             {

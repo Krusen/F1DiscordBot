@@ -163,7 +163,7 @@ namespace F1DiscordBot
             return Program.ErgastClient.GetResponseAsync(request);
         }
 
-        private static async Task<Driver> FindDriverAsync(string id)
+        public static async Task<Driver> FindDriverAsync(string id)
         {
             var ergastClient = Program.ErgastClient;
 

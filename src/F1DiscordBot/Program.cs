@@ -71,6 +71,7 @@ namespace F1DiscordBot
             Commands.RegisterCommands<StandingsCommands>();
             Commands.RegisterCommands<DriverCommands>();
             Commands.RegisterCommands<AskCommands>();
+            Commands.RegisterCommands<MiscCommands>();
 
             Client.UseInteractivity();
 

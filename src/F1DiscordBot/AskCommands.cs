@@ -127,7 +127,7 @@ namespace F1DiscordBot
                 return;
             }
 
-            await ctx.RespondAsync($"**{driverResult.Driver.FullName} ({driverResult.Constructor.Name})** finished **{driverResult.Position}** ({driverResult.Points} points) at the **{race.RaceName}** in **{race.Season}**");
+            await ctx.RespondWithSpoilerAsync($"**{driverResult.Driver.FullName} ({driverResult.Constructor.Name})** finished **{driverResult.Position}** ({driverResult.Points} points) at the **{race.RaceName}** in **{race.Season}**");
         }
 
         private static async Task HandleRacePositionAsync(CommandContext ctx, LuisResponse response)
@@ -216,7 +216,7 @@ namespace F1DiscordBot
                 return;
             }
 
-            await ctx.RespondAsync($"**{driver.Driver.FullName} ({driver.Constructor.Name})** finished **{positionText}** ({driver.Points} points) at the **{race.RaceName}** in **{race.Season}**");
+            await ctx.RespondWithSpoilerAsync($"**{driver.Driver.FullName} ({driver.Constructor.Name})** finished **{positionText}** ({driver.Points} points) at the **{race.RaceName}** in **{race.Season}**");
         }
 
         private static async Task<Circuit> FindCircuitAsync(string id, string season)

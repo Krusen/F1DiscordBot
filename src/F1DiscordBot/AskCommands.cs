@@ -41,7 +41,7 @@ namespace F1DiscordBot
 
             var response = JsonConvert.DeserializeObject<LuisResponse>(json);
 
-            if (response.TopScoringIntent.Score > 0.25)
+            if (response.TopScoringIntent.Score > 0.30)
             {
                 switch (response.TopScoringIntent.Intent)
                 {

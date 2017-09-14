@@ -18,38 +18,44 @@ namespace F1DiscordBot
     {
         private readonly string LuisEndpoint = ConfigurationManager.AppSettings["LuisEndpoint_F1Bot"] ?? throw new Exception($"Missing app setting 'LuisEndpoint_F1Bot'");
 
-        private readonly IList<string> UnknownQueryRespones = new List<string>
-        {
-            "I have no idea what you are trying to ask...",
-            "You'll have to be more specific than that, sir",
-            "Is that even a question?",
-            "Why would I know that?"
-        };
-
         [Command("bot")]
         public async Task Ask(CommandContext ctx, [RemainingText] string query)
         {
             await ctx.TriggerTypingAsync();
 
-            var webClient = new WebClient();
+            var help = "You can ask me about who won a specific race, or who finished at a specific position at a specific race.\n\n" +
+                       "Examples:\n" +
+                       "\t`+bot who finished 3rd at monaco?`\n" +
+                       "\t`+bot where did kimi finish at monza in 2015?`\n" +
+                       "\t`+bot where did ric finish?` (defaults to last race)";
 
-            var json = await webClient.DownloadStringTaskAsync(LuisEndpoint + HttpUtility.UrlEncode(query));
-
-            var response = JsonConvert.DeserializeObject<LuisResponse>(json);
-
-            switch (response.TopScoringIntent.Intent)
+            if (string.IsNullOrEmpty(query))
             {
-                case IntentType.RacePosition:
-                    await HandleRacePositionAsync(ctx, response);
-                    return;
-                case IntentType.DriverRacePosition:
-                    await HandleDriverRacePositionAsync(ctx, response);
-                    return;
+                await ctx.RespondAsync(help);
+                return;
             }
 
-            await ctx.RespondAsync(UnknownQueryRespones.GetRandom());
-        }
+            if (!string.IsNullOrEmpty(query))
+            {
+                var webClient = new WebClient();
 
+                var json = await webClient.DownloadStringTaskAsync(LuisEndpoint + HttpUtility.UrlEncode(query));
+
+                var response = JsonConvert.DeserializeObject<LuisResponse>(json);
+
+                switch (response.TopScoringIntent.Intent)
+                {
+                    case IntentType.RacePosition:
+                        await HandleRacePositionAsync(ctx, response);
+                        return;
+                    case IntentType.DriverRacePosition:
+                        await HandleDriverRacePositionAsync(ctx, response);
+                        return;
+                }
+            }
+
+            await ctx.RespondAsync("I didn't understand that.\n" + help);
+        }
         private static async Task HandleDriverRacePositionAsync(CommandContext ctx, LuisResponse response)
         {
             var resultsRequest = new RaceResultsRequest

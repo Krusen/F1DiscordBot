@@ -35,14 +35,14 @@ namespace F1DiscordBot
                 return;
             }
 
-            if (!string.IsNullOrEmpty(query))
+            var webClient = new WebClient();
+
+            var json = await webClient.DownloadStringTaskAsync(LuisEndpoint + HttpUtility.UrlEncode(query));
+
+            var response = JsonConvert.DeserializeObject<LuisResponse>(json);
+
+            if (response.TopScoringIntent.Score > 0.25)
             {
-                var webClient = new WebClient();
-
-                var json = await webClient.DownloadStringTaskAsync(LuisEndpoint + HttpUtility.UrlEncode(query));
-
-                var response = JsonConvert.DeserializeObject<LuisResponse>(json);
-
                 switch (response.TopScoringIntent.Intent)
                 {
                     case IntentType.RacePosition:
@@ -54,7 +54,7 @@ namespace F1DiscordBot
                 }
             }
 
-            await ctx.RespondAsync("I didn't understand that.\n" + help);
+            await ctx.RespondAsync("I don't know how to answer that.\n" + help);
         }
         private static async Task HandleDriverRacePositionAsync(CommandContext ctx, LuisResponse response)
         {

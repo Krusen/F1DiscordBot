@@ -61,7 +61,7 @@ namespace F1DiscordBot
                 }
             }
 
-            await ctx.RespondAsync("I don't know how to answer that.\n" + help);
+            await ctx.RespondAsync("I don't know how to answer that.\n\n" + help);
         }
 
         public static async Task HandleChampionshipPositionAsync(CommandContext ctx, LuisResponse response)
@@ -124,7 +124,7 @@ namespace F1DiscordBot
                 : driverStandings.Standings.FirstOrDefault(x => x.Position == position);
 
             await ctx.RespondWithSpoilerAsync(
-                $"**{standing.Driver.FullName} ({standing.Constructor.Name})** {(position == 1 ? "won" : $"finished {positionText} in")} the WDC in **{driverStandings.Season}**" +
+                $"**{standing.Driver.FullName} ({standing.Constructor.Name})** {(position == 1 ? "won" : $"finished **{position.WithSuffix()}** in")} the WDC in **{driverStandings.Season}**" +
                 $" with **{standing.Points} points** and **{standing.Wins} race wins**");
             //$" ahead of **{runnerUp.Driver.FullName} ({runnerUp.Constructor.Name})** by {winner.Points - runnerUp.Points} points");
         }
@@ -176,7 +176,7 @@ namespace F1DiscordBot
                 : constructorStandings.Standings.FirstOrDefault(x => x.Position == position);
 
             await ctx.RespondWithSpoilerAsync(
-                $"**{standing.Constructor.Name}** {(position == 1 ? "won" : $"finished {positionText} in")} the WCC in **{constructorStandings.Season}**" +
+                $"**{standing.Constructor.Name}** {(position == 1 ? "won" : $"finished **{position.WithSuffix()}** in")} the WCC in **{constructorStandings.Season}**" +
                 $" with **{standing.Points} points** and **{standing.Wins} race wins**");
         }
 
@@ -257,7 +257,7 @@ namespace F1DiscordBot
                 return;
             }
 
-            await ctx.RespondWithSpoilerAsync($"**{driverResult.Driver.FullName} ({driverResult.Constructor.Name})** finished **{driverResult.Position}** ({driverResult.Points} points) at the **{race.RaceName}** in **{race.Season}**");
+            await ctx.RespondWithSpoilerAsync($"**{driverResult.Driver.FullName} ({driverResult.Constructor.Name})** finished **{driverResult.Position.WithSuffix()}** ({driverResult.Points} points) at the **{race.RaceName}** in **{race.Season}**");
         }
 
         private static async Task HandleRacePositionAsync(CommandContext ctx, LuisResponse response)
@@ -346,7 +346,7 @@ namespace F1DiscordBot
                 return;
             }
 
-            await ctx.RespondWithSpoilerAsync($"**{driver.Driver.FullName} ({driver.Constructor.Name})** finished **{positionText}** ({driver.Points} points) at the **{race.RaceName}** in **{race.Season}**");
+            await ctx.RespondWithSpoilerAsync($"**{driver.Driver.FullName} ({driver.Constructor.Name})** finished **{position.WithSuffix()}** ({driver.Points} points) at the **{race.RaceName}** in **{race.Season}**");
         }
 
         private static async Task<Circuit> FindCircuitAsync(string id, string season)

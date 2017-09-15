@@ -64,6 +64,19 @@ namespace F1DiscordBot
 
         public static async Task HandleChampionshipPositionAsync(CommandContext ctx, LuisResponse response)
         {
+            var championshipType = response.GetEntity(EntityType.Championship)?.Resolution.Values.FirstOrDefault();
+            if (championshipType == "wcc")
+            {
+                await HandleChampionshipPositionConstructorAsync(ctx, response);
+            }
+            else
+            {
+                await HandleChampionshipPositionDriverAsync(ctx, response);
+            }
+        }
+
+        private static async Task HandleChampionshipPositionDriverAsync(CommandContext ctx, LuisResponse response)
+        {
             var driverStandingsRequest = new DriverStandingsRequest
             {
                 Season = Seasons.Current,
@@ -78,7 +91,7 @@ namespace F1DiscordBot
             }
             else
             {
-                var raceListRequest = new RaceListRequest {Season = driverStandingsRequest.Season};
+                var raceListRequest = new RaceListRequest { Season = driverStandingsRequest.Season };
                 var raceList = await Program.ErgastClient.GetResponseAsync(raceListRequest);
                 if (raceList.Races.LastOrDefault()?.StartTime > DateTime.UtcNow)
                 {
@@ -112,6 +125,57 @@ namespace F1DiscordBot
                 $"**{standing.Driver.FullName} ({standing.Constructor.Name})** {(position == 1 ? "won" : $"finished {positionText} in")} the WDC in **{driverStandings.Season}**" +
                 $" with **{standing.Points} points** and **{standing.Wins} race wins**");
             //$" ahead of **{runnerUp.Driver.FullName} ({runnerUp.Constructor.Name})** by {winner.Points - runnerUp.Points} points");
+        }
+
+        private static async Task HandleChampionshipPositionConstructorAsync(CommandContext ctx, LuisResponse response)
+        {
+            var constructorStandingsRequest = new ConstructorStandingsRequest
+            {
+                Season = Seasons.Current,
+                Limit = 1000
+            };
+
+            // Season
+            var season = response.GetEntity(EntityType.Season)?.Value;
+            if (season != null)
+            {
+                constructorStandingsRequest.Season = season;
+            }
+            else
+            {
+                var raceListRequest = new RaceListRequest { Season = constructorStandingsRequest.Season };
+                var raceList = await Program.ErgastClient.GetResponseAsync(raceListRequest);
+                if (raceList.Races.LastOrDefault()?.StartTime > DateTime.UtcNow)
+                {
+                    constructorStandingsRequest.Season = (raceList.Races.First().Season - 1).ToString();
+                }
+            }
+
+            var constructorStandingsResponse = await Program.ErgastClient.GetResponseAsync(constructorStandingsRequest);
+            if (!constructorStandingsResponse.StandingsLists.Any())
+            {
+                await ctx.RespondAsync($"Unable to find a race for **{constructorStandingsRequest.Season}** season, round **{constructorStandingsRequest.Round}**");
+                return;
+            }
+
+            string positionText = null;
+            var position = 1;
+            var positionEntity = response.GetEntity(EntityType.Position);
+            if (positionEntity != null)
+            {
+                positionText = positionEntity.Value;
+                if (int.TryParse(positionEntity.Resolution.Values.First(), out var parsedPosition))
+                    position = parsedPosition;
+            }
+
+            var constructorStandings = constructorStandingsResponse.StandingsLists.First();
+            var standing = positionText == "last"
+                ? constructorStandings.Standings.LastOrDefault()
+                : constructorStandings.Standings.FirstOrDefault(x => x.Position == position);
+
+            await ctx.RespondWithSpoilerAsync(
+                $"**{standing.Constructor.Name}** {(position == 1 ? "won" : $"finished {positionText} in")} the WCC in **{constructorStandings.Season}**" +
+                $" with **{standing.Points} points** and **{standing.Wins} race wins**");
         }
 
         private static async Task HandleDriverRacePositionAsync(CommandContext ctx, LuisResponse response)

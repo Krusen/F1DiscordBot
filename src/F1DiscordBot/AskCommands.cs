@@ -25,11 +25,13 @@ namespace F1DiscordBot
             await ctx.TriggerTypingAsync();
 
             var help =
-                "You can ask me about who won a specific race, or who finished at a specific position at a specific race.\n\n" +
+                "You can ask me about who won a specific race, who finished at a specific position at a specific race, who/which team won a specific season.\n\n" +
                 "Examples:\n" +
                 "\t`+bot who finished 3rd at monaco?`\n" +
                 "\t`+bot where did kimi finish at monza in 2015?`\n" +
-                "\t`+bot where did ric finish?` (defaults to last race)";
+                "\t`+bot where did ric finish?` (defaults to last race)\n" +
+                "\t`+bot who won in 2009?`\n" +
+                "\t`+bot which team won in 2007?`";
 
             if (string.IsNullOrEmpty(query))
             {

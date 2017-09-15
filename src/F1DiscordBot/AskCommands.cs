@@ -16,18 +16,20 @@ namespace F1DiscordBot
 {
     public class AskCommands
     {
-        private readonly string LuisEndpoint = ConfigurationManager.AppSettings["LuisEndpoint_F1Bot"] ?? throw new Exception($"Missing app setting 'LuisEndpoint_F1Bot'");
+        private readonly string LuisEndpoint = ConfigurationManager.AppSettings["LuisEndpoint_F1Bot"] ??
+                                               throw new Exception($"Missing app setting 'LuisEndpoint_F1Bot'");
 
         [Command("bot")]
         public async Task Ask(CommandContext ctx, [RemainingText] string query)
         {
             await ctx.TriggerTypingAsync();
 
-            var help = "You can ask me about who won a specific race, or who finished at a specific position at a specific race.\n\n" +
-                       "Examples:\n" +
-                       "\t`+bot who finished 3rd at monaco?`\n" +
-                       "\t`+bot where did kimi finish at monza in 2015?`\n" +
-                       "\t`+bot where did ric finish?` (defaults to last race)";
+            var help =
+                "You can ask me about who won a specific race, or who finished at a specific position at a specific race.\n\n" +
+                "Examples:\n" +
+                "\t`+bot who finished 3rd at monaco?`\n" +
+                "\t`+bot where did kimi finish at monza in 2015?`\n" +
+                "\t`+bot where did ric finish?` (defaults to last race)";
 
             if (string.IsNullOrEmpty(query))
             {
@@ -51,11 +53,67 @@ namespace F1DiscordBot
                     case IntentType.DriverRacePosition:
                         await HandleDriverRacePositionAsync(ctx, response);
                         return;
+                    case IntentType.ChampionshipPosition:
+                        await HandleChampionshipPositionAsync(ctx, response);
+                        return;
                 }
             }
 
             await ctx.RespondAsync("I don't know how to answer that.\n" + help);
         }
+
+        public static async Task HandleChampionshipPositionAsync(CommandContext ctx, LuisResponse response)
+        {
+            var driverStandingsRequest = new DriverStandingsRequest
+            {
+                Season = Seasons.Current,
+                Limit = 1000
+            };
+
+            // Season
+            var season = response.GetEntity(EntityType.Season)?.Value;
+            if (season != null)
+            {
+                driverStandingsRequest.Season = season;
+            }
+            else
+            {
+                var raceListRequest = new RaceListRequest {Season = driverStandingsRequest.Season};
+                var raceList = await Program.ErgastClient.GetResponseAsync(raceListRequest);
+                if (raceList.Races.LastOrDefault()?.StartTime > DateTime.UtcNow)
+                {
+                    driverStandingsRequest.Season = (raceList.Races.First().Season - 1).ToString();
+                }
+            }
+
+            var driverStandingsResponse = await Program.ErgastClient.GetResponseAsync(driverStandingsRequest);
+            if (!driverStandingsResponse.StandingsLists.Any())
+            {
+                await ctx.RespondAsync($"Unable to find a race for **{driverStandingsRequest.Season}** season, round **{driverStandingsRequest.Round}**");
+                return;
+            }
+
+            string positionText = null;
+            var position = 1;
+            var positionEntity = response.GetEntity(EntityType.Position);
+            if (positionEntity != null)
+            {
+                positionText = positionEntity.Value;
+                if (int.TryParse(positionEntity.Resolution.Values.First(), out var parsedPosition))
+                    position = parsedPosition;
+            }
+
+            var driverStandings = driverStandingsResponse.StandingsLists.First();
+            var standing = positionText == "last"
+                ? driverStandings.Standings.LastOrDefault()
+                : driverStandings.Standings.FirstOrDefault(x => x.Position == position);
+
+            await ctx.RespondWithSpoilerAsync(
+                $"**{standing.Driver.FullName} ({standing.Constructor.Name})** {(position == 1 ? "won" : $"finished {positionText} in")} the WDC in **{driverStandings.Season}**" +
+                $" with **{standing.Points} points** and **{standing.Wins} race wins**");
+            //$" ahead of **{runnerUp.Driver.FullName} ({runnerUp.Constructor.Name})** by {winner.Points - runnerUp.Points} points");
+        }
+
         private static async Task HandleDriverRacePositionAsync(CommandContext ctx, LuisResponse response)
         {
             var resultsRequest = new RaceResultsRequest
@@ -229,7 +287,7 @@ namespace F1DiscordBot
         {
             var ergastClient = Program.ErgastClient;
 
-            var allCircuitsRequest = new CircuitInfoRequest { Season = season, Limit = 1000 };
+            var allCircuitsRequest = new CircuitInfoRequest {Season = season, Limit = 1000};
             var allCircuitsResponse = await ergastClient.GetResponseAsync(allCircuitsRequest);
 
             var circuits = allCircuitsResponse.Circuits;
@@ -245,7 +303,6 @@ namespace F1DiscordBot
 
         public static T GetDriverResult<T>(string id, IList<T> list, Func<T, Driver> driverFn) where T : class
         {
-
             var ignoreCase = StringComparison.OrdinalIgnoreCase;
 
             T driver = default;
@@ -324,6 +381,7 @@ namespace F1DiscordBot
 
     public enum EntityType
     {
+        Championship,
         Circuit,
         Driver,
         Round,
@@ -335,7 +393,7 @@ namespace F1DiscordBot
     public enum IntentType
     {
         None,
-        ChampionshipWinner,
+        ChampionshipPosition,
         DriverRacePosition,
         RaceResults,
         RacePosition

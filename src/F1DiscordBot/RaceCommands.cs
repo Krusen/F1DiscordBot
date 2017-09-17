@@ -73,12 +73,44 @@ namespace F1DiscordBot
             embed.AddField("Season", $"{race.Season}", inline: true);
             embed.AddField("Round", $"{race.Round}", inline: true);
             embed.AddField("Date", $"{race.StartTime:yyyy-MM-dd}", inline: true);
-            embed.AddField("Race Start", $"{race.StartTime:HH':'mm' GMT'} / {race.StartTime.Add(TimeSpan.FromHours(-5)):HH':'mm' EST'} / {race.StartTime.Add(TimeSpan.FromHours(-8)):HH':'mm' PST'}");
+            embed.AddField($"Race Start ({FormatTimeToRaceStart(race.StartTime)})", $"{race.StartTime:HH':'mm' GMT'} / {race.StartTime.Add(TimeSpan.FromHours(-5)):HH':'mm' EST'} / {race.StartTime.Add(TimeSpan.FromHours(-8)):HH':'mm' PST'}\n" +
+                                         $"");
             embed.AddField("Race", $"[{race.RaceName}]({race.WikiUrl})", inline: true);
             embed.AddField("Circuit", $"[{race.Circuit.CircuitName}]({race.Circuit.WikiUrl})", inline: true);
             embed.AddField("Location", $"{race.Circuit.Location.Locality}, {race.Circuit.Location.Country}");
 
             return embed.Build();
+        }
+
+        private static string FormatTimeToRaceStart(DateTime raceStart)
+        {
+            var utcNow = DateTime.UtcNow;
+
+            var hasStarted = raceStart < utcNow;
+            var diff = hasStarted ? utcNow - raceStart : raceStart - utcNow;
+
+            var format = "";
+
+            if (diff.Days > 0)
+                format += $"d' day{(diff.Days > 1 ? "s" : "")} '";
+
+            if (diff.Days > 0 || diff.Hours > 0)
+                format += $"h' hour{(diff.Hours > 1 ? "s" : "")} '";
+
+            format += $"m' minute{(diff.Minutes > 1 ? "s" : "")}'";
+
+            var output = diff.ToString(format);
+
+            if (hasStarted)
+            {
+                output += " ago";
+            }
+            else
+            {
+                output = "in " + output;
+            }
+
+            return output;
         }
     }
 }

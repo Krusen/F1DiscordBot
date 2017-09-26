@@ -73,7 +73,6 @@ namespace F1DiscordBot
             };
 
             var winner = race.Results.First();
-            var fastest = race.Results.OrderBy(x => x.FastestLap?.LapTime ?? TimeSpan.MaxValue).FirstOrDefault();
 
             embed.AddField("Season", $"{race.Season}", inline: true);
             embed.AddField("Round", $"{race.Round}", inline: true);
@@ -85,6 +84,7 @@ namespace F1DiscordBot
             embed.AddField("Total Race Time", $"{winner.TotalRaceTime.Value:h'h 'mm'm 'ss's'}", inline: true);
             embed.AddField("Laps", $"{winner.Laps}", inline: true);
 
+            var fastest = race.Results.Where(x => x.FastestLap != null).OrderBy(x => x.FastestLap.LapTime).FirstOrDefault();
             if (fastest != null)
                 embed.AddField("Fastest Lap", $"{GetFlag(fastest.Driver.Nationality)}  {fastest.Driver.FullName} - {fastest.FastestLap.LapTime:m':'ss':'fff} on lap {fastest.FastestLap.LapNumber}");
 

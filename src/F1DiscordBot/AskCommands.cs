@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -10,6 +12,7 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using ErgastApi.Requests;
 using ErgastApi.Responses.Models;
+using ErgastApi.Responses.Models.RaceInfo;
 using Newtonsoft.Json;
 
 namespace F1DiscordBot
@@ -58,6 +61,12 @@ namespace F1DiscordBot
                     case IntentType.ChampionshipPosition:
                         await HandleChampionshipPositionAsync(ctx, response);
                         return;
+                    case IntentType.FastestLap:
+                        await HandleFastestLapAsync(ctx, response);
+                        return;
+                    //case IntentType.DriverFastestLap:
+                    //    await HandleDriverFastestLapAsync(ctx, response);
+                    //    return;
                 }
             }
 
@@ -349,6 +358,88 @@ namespace F1DiscordBot
             await ctx.RespondWithSpoilerAsync($"**{driver.Driver.FullName} ({driver.Constructor.Name})** finished **{position.WithSuffix()}** ({driver.Points} points) at the **{race.RaceName}** in **{race.Season}**");
         }
 
+        private static async Task HandleFastestLapAsync(CommandContext ctx, LuisResponse response)
+        {
+            var resultsRequest = new RaceResultsRequest
+            {
+                FastestLapRank = 1,
+                Limit = 1000
+            };
+
+            foreach (var entity in response.Entities)
+            {
+                if (entity.Type == EntityType.Season)
+                    resultsRequest.Season = entity.Value;
+
+                if (entity.Type == EntityType.Round)
+                    resultsRequest.Round = entity.Value;
+
+                if (entity.Type == EntityType.RelativeRound)
+                    resultsRequest.Round = entity.Resolution.Values.First();
+            }
+
+            var resultsResponse = await Program.ErgastClient.GetResponseAsync(resultsRequest);
+            if (!resultsResponse.Races.Any())
+            {
+                await ctx.RespondAsync("I could not find any results matching your question");
+                return;
+            }
+
+            var circuitRaceResults = new List<RaceWithResults>();
+            var circuitEntity = response.GetEntity(EntityType.Circuit);
+            if (circuitEntity != null)
+            {
+                var ignoreCase = StringComparison.OrdinalIgnoreCase;
+                var circuitValue = circuitEntity.Value;
+                var races = resultsResponse.Races;
+                circuitRaceResults = races.Where(x => Regex.IsMatch(x.RaceName, $".*{circuitValue}.*", RegexOptions.IgnoreCase) ||
+                                            string.Equals(x.Circuit.CircuitId, circuitValue, ignoreCase) ||
+                                            string.Equals(x.Circuit.CircuitName, circuitValue, ignoreCase) ||
+                                            string.Equals(x.Circuit.Location.Country, circuitValue, ignoreCase) ||
+                                            string.Equals(x.Circuit.Location.Locality, circuitValue, ignoreCase) ||
+                                            Regex.IsMatch(x.Circuit.CircuitName, $".*{circuitValue}.*",
+                                                RegexOptions.IgnoreCase))
+                    //.Select(x => x.Results.FirstOrDefault())
+                    .ToList();
+
+                if (!circuitRaceResults.Any())
+                {
+                    await ctx.RespondAsync($"I couldn't find any races in **{(resultsRequest.Season == Seasons.Current ? DateTime.Now.Year.ToString() : resultsRequest.Season)}** matching **{circuitEntity.Value}**");
+                    return;
+                }
+            }
+            else
+            {
+                await ctx.RespondAsync($"I wasn't able to determine the circuit from your question");
+                return;
+            }
+
+            var topResults = circuitRaceResults.OrderBy(x => x.Results.FirstOrDefault()?.FastestLap.LapTime).Take(5).ToList();
+
+            if (topResults.Count == 1)
+            {
+                var result = topResults.First();
+                var fastest = result.Results.First();
+                await ctx.RespondAsync($"Fastest lap at **{result.RaceName}** in **{result.Season}** was **{fastest.FastestLap.LapTime:m':'ss'.'fff}** (lap {fastest.FastestLap.LapNumber}) by **{fastest.Driver.FullName}** for **{fastest.Constructor.Name}**");
+                return;
+            }
+
+            var sb = new StringBuilder();
+            sb.Append("```");
+            sb.AppendLine("TIME      YEAR  DRIVER               CONSTRUCTOR");
+            sb.AppendLine("------------------------------------------------"); // Max 55 wide
+
+            foreach (var result in topResults)
+            {
+                var fastest = result.Results.First();
+                sb.AppendLine($"{fastest.FastestLap.LapTime:m':'ss'.'fff}  {result.Season}  {fastest.Driver.FullName,-20} {fastest.Constructor.Name}");
+            }
+
+            sb.Append("```");
+
+            await ctx.RespondAsync(sb.ToString());
+        }
+
         private static async Task<Circuit> FindCircuitAsync(string id, string season)
         {
             var ergastClient = Program.ErgastClient;
@@ -460,7 +551,9 @@ namespace F1DiscordBot
     {
         None,
         ChampionshipPosition,
+        DriverFastestLap,
         DriverRacePosition,
+        FastestLap,
         RaceResults,
         RacePosition
     }
